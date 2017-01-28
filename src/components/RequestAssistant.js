@@ -1,4 +1,4 @@
-if (!com) var net = {};
+if (!com) var com = {};
 if (!com.github) com.github = {};
 if (!com.github.haqer1) com.github.haqer1 = {};
 if (!com.github.haqer1.app) com.github.haqer1.app = {};
