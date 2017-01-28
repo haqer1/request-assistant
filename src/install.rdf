@@ -5,7 +5,7 @@
 
   <Description about="urn:mozilla:install-manifest">
     <em:id>{a081ef40-2320-4c74-98b9-a17cd7027237}</em:id>
-    <em:version>0.2.7</em:version>
+    <em:version>0.2.8</em:version>
     <em:type>2</em:type>
     <em:multiprocessCompatible>true</em:multiprocessCompatible>
     
@@ -28,9 +28,9 @@
     
     <!-- Front End MetaData -->
     <em:name>Request Assistant</em:name>
-    	<em:description>Currently logs all URLs accessed by the app (currently, into app console), whether the request is explicitly made by the user, or automatically made by the app itself.
+    	<em:description>Currently logs all URLs accessed by the app (at present, into app console), whether the request is explicitly made by the user or automatically made by the app itself.
 	</em:description>
 	<em:creator>Reşat SABIQ</em:creator>
-<!--	<em:homepageURL></em:homepageURL> -->
-  </Description>      
+	<em:homepageURL>https://addons.mozilla.org/en-US/firefox/addon/request-assistant/</em:homepageURL>
+  </Description> 
 </RDF>

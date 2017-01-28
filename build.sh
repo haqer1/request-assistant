@@ -1,5 +1,4 @@
-mahsul="request-assistant-0.2.7.xpi"
-mkdir -p dist
+mahsul="request-assistant-0.2.8.xpi"
 cd src
 for dosye in `find . -name "*~"`;
 do
