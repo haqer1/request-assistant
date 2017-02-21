@@ -39,12 +39,28 @@ com.github.haqer1.logging.Logger = function(isim, useDump, skipTimestamp) {
 	}
 }
 
-/**
- * Currently, logs all HTTP requests, using Logger.
- */
-com.github.haqer1.app.RequestAssistant = function() {
-	const logger = new com.github.haqer1.logging.Logger("RequestAssistant", true);
-	const DEBUG_ENABLED = false;
+com.github.haqer1.app.PreferenceClearer = function(prefBranchName, _prefsArray) {
+	this.prefBranch = this.prefService.getBranch(prefBranchName).QueryInterface(Components.interfaces.nsIPrefBranch);
+	this.prefsArray = _prefsArray;
+}
+
+com.github.haqer1.app.PreferenceClearer.prototype = {
+	prefService: Components.classes["@mozilla.org/preferences-service;1"].getService(Components.interfaces.nsIPrefService),
+
+	clearPreferences: function() {
+//		this.prefsArray.forEach(this.clearPreference);
+		for (var i = 0; i < this.prefsArray.length; i++)
+			this.clearPreference(this.prefsArray[i]);
+	},
+
+	clearPreference: function(pref) {
+		if (this.prefBranch.prefHasUserValue(pref))
+			this.prefBranch.clearUserPref(pref);
+	}
+}
+
+com.github.haqer1.app.RequestAssistantDelegate = function(logger) {
+	com.github.haqer1.app.PreferenceClearer.call(this, "browser.dom.window.dump.", ["enabled"]);
 
 	this.observe = function(subject, topic, data) {
 		if (topic == "http-on-modify-request") {
@@ -54,13 +70,43 @@ com.github.haqer1.app.RequestAssistant = function() {
 			else
 				logger.log("2. " +httpChannel.URI.spec+ " (1. " +httpChannel.originalURI.spec+ ')');
 			return;
-		} else if (topic == "profile-after-change") {
+		} else if (topic == "profile-change-teardown") {
+			this.clearPreferences();
+		}
+	};
+}
+
+com.github.haqer1.app.RequestAssistantDelegate.prototype = Object.create(com.github.haqer1.app.PreferenceClearer.prototype, {
+	logger: {
+		value: new com.github.haqer1.logging.Logger("RequestAssistantDelegate", true)
+	},
+	clearPreferences: {
+		value: function() {
+			this.logger.log("Clearing preferences by calling parent class...");
+			com.github.haqer1.app.PreferenceClearer.prototype.clearPreferences.apply(this, arguments);
+			this.logger.log("Done.");
+		}
+	}
+});
+com.github.haqer1.app.RequestAssistantDelegate.prototype.constructor=com.github.haqer1.app.RequestAssistantDelegate;
+
+/**
+ * Currently, logs all HTTP requests, using Logger.
+ */
+com.github.haqer1.app.RequestAssistant = function() {
+	const logger = new com.github.haqer1.logging.Logger("RequestAssistant", true);
+	const DEBUG_ENABLED = true;
+	var delegate = new com.github.haqer1.app.RequestAssistantDelegate(logger);
+
+	this.observe = function(subject, topic, data) {
+		if (topic == "profile-after-change") {
 			if (DEBUG_ENABLED)	logger.log("profile-after-change...");
 			var os = Components.classes["@mozilla.org/observer-service;1"]
 					 .getService(Components.interfaces.nsIObserverService);
-			os.addObserver(this, "http-on-modify-request", false);
-		}
-	};
+			os.addObserver(delegate, "http-on-modify-request", false);
+			os.addObserver(delegate, "profile-change-teardown", false);
+		} 	
+	}
 
 	this.QueryInterface = function (iid) {
 		if (iid.equals(Components.interfaces.nsIObserver) ||
