@@ -2,16 +2,19 @@ if (!com) var com = {};
 if (!com.github) com.github = {};
 if (!com.github.haqer1) com.github.haqer1 = {};
 if (!com.github.haqer1.app) com.github.haqer1.app = {};
-if (!com.github.haqer1.logging) com.github.haqer1.logging = {};
+if (!com.github.haqer1.app.ra) com.github.haqer1.app.ra = {};
+if (!com.github.haqer1.util) com.github.haqer1.util = {};
+if (!com.github.haqer1.util.config) com.github.haqer1.util.config = {};
+if (!com.github.haqer1.util.logging) com.github.haqer1.util.logging = {};
 
 Components.utils.import("resource://gre/modules/XPCOMUtils.jsm");
 
-// TODO: puts, i18n
+// TODO: 1. puts; 2. i18n
 
 /**
  * Logs to console, and optionally also dumps.
  */
-com.github.haqer1.logging.Logger = function(isim, useDump, skipTimestamp) {
+com.github.haqer1.util.logging.Logger = function(isim, useDump, skipTimestamp) {
 	var consoleService = Components.classes["@mozilla.org/consoleservice;1"].getService(Components.interfaces.nsIConsoleService);
 
 	this.log = function(text) {
@@ -39,17 +42,17 @@ com.github.haqer1.logging.Logger = function(isim, useDump, skipTimestamp) {
 	}
 }
 
-com.github.haqer1.app.PreferenceClearer = function(prefBranchName, _prefsArray) {
-	var _prefService = Components.classes["@mozilla.org/preferences-service;1"].getService(Components.interfaces.nsIPrefService);
-	var _prefBranch = _prefService.getBranch(prefBranchName).QueryInterface(Components.interfaces.nsIPrefBranch);
+com.github.haqer1.util.config.PreferenceClearer = function(prefBranchName, prefsArray) {
+	var prefService = Components.classes["@mozilla.org/preferences-service;1"].getService(Components.interfaces.nsIPrefService);
+	var prefBranch = prefService.getBranch(prefBranchName).QueryInterface(Components.interfaces.nsIPrefBranch);
 	Object.defineProperty(this, "prefBranch", {
-		value: _prefBranch,
+		value: prefBranch,
 		writable: false
 	});
-	Object.defineProperty(this, "prefsArray", {value: _prefsArray, writable: false});
+	Object.defineProperty(this, "prefsArray", {value: prefsArray, writable: false});
 }
 
-Object.defineProperty(com.github.haqer1.app.PreferenceClearer.prototype, "clearPreferences", {
+Object.defineProperty(com.github.haqer1.util.config.PreferenceClearer.prototype, "clearPreferences", {
 		value: function() {
 //			this.prefsArray.forEach(this.clearPreference);
 			for (var i = 0; i < this.prefsArray.length; i++)
@@ -57,7 +60,7 @@ Object.defineProperty(com.github.haqer1.app.PreferenceClearer.prototype, "clearP
 		},
 		writable: false
 	});
-Object.defineProperty(com.github.haqer1.app.PreferenceClearer.prototype, "clearPreference", {
+Object.defineProperty(com.github.haqer1.util.config.PreferenceClearer.prototype, "clearPreference", {
 		value: function(pref) {
 			if (this.prefBranch.prefHasUserValue(pref))
 				this.prefBranch.clearUserPref(pref);
@@ -65,8 +68,8 @@ Object.defineProperty(com.github.haqer1.app.PreferenceClearer.prototype, "clearP
 		writable: false
 	});
 
-com.github.haqer1.app.RequestAssistantDelegate = function(logger) {
-	com.github.haqer1.app.PreferenceClearer.call(this, "browser.dom.window.dump.", ["enabled"]);
+com.github.haqer1.app.ra.RequestAssistantDelegate = function(logger) {
+	com.github.haqer1.util.config.PreferenceClearer.call(this, "browser.dom.window.dump.", ["enabled"]);
 
 	this.observe = function(subject, topic, data) {
 		if (topic == "http-on-modify-request") {
@@ -82,28 +85,28 @@ com.github.haqer1.app.RequestAssistantDelegate = function(logger) {
 	};
 }
 
-com.github.haqer1.app.RequestAssistantDelegate.prototype = Object.create(com.github.haqer1.app.PreferenceClearer.prototype, {
+com.github.haqer1.app.ra.RequestAssistantDelegate.prototype = Object.create(com.github.haqer1.util.config.PreferenceClearer.prototype, {
 	logger: {
-		value: new com.github.haqer1.logging.Logger("RequestAssistantDelegate", true),
+		value: new com.github.haqer1.util.logging.Logger("RequestAssistantDelegate", true),
 		writable: false
 	},
 	clearPreferences: {
 		value: function() {
 			this.logger.log("Clearing preferences by calling parent class...");
-			com.github.haqer1.app.PreferenceClearer.prototype.clearPreferences.apply(this, arguments);
+			com.github.haqer1.util.config.PreferenceClearer.prototype.clearPreferences.apply(this, arguments);
 			this.logger.log("Done.");
 		}
 	}
 });
-com.github.haqer1.app.RequestAssistantDelegate.prototype.constructor=com.github.haqer1.app.RequestAssistantDelegate;
+com.github.haqer1.app.ra.RequestAssistantDelegate.prototype.constructor=com.github.haqer1.app.ra.RequestAssistantDelegate;
 
 /**
  * Currently, logs all HTTP requests, using Logger.
  */
-com.github.haqer1.app.RequestAssistant = function() {
-	const logger = new com.github.haqer1.logging.Logger("RequestAssistant", true);
+com.github.haqer1.app.ra.RequestAssistant = function() {
+	const logger = new com.github.haqer1.util.logging.Logger("RequestAssistant", true);
 	const DEBUG_ENABLED = true;
-	var delegate = new com.github.haqer1.app.RequestAssistantDelegate(logger);
+	var delegate = new com.github.haqer1.app.ra.RequestAssistantDelegate(logger);
 
 	this.observe = function(subject, topic, data) {
 		if (topic == "profile-after-change") {
@@ -125,13 +128,13 @@ com.github.haqer1.app.RequestAssistant = function() {
 	};
 }
 
-com.github.haqer1.app.RequestAssistant.prototype = {
+com.github.haqer1.app.ra.RequestAssistant.prototype = {
 	classID: Components.ID("{e03aca24-5f35-477f-abd3-ae69f41256de}"),
 	progID: "@haqer1.github.com/request-assistant;1",
 	requestAssistantName: "Request Assistant"
 };
 
 if (XPCOMUtils.generateNSGetFactory)
-    var NSGetFactory = XPCOMUtils.generateNSGetFactory([com.github.haqer1.app.RequestAssistant]);
+    var NSGetFactory = XPCOMUtils.generateNSGetFactory([com.github.haqer1.app.ra.RequestAssistant]);
 else
-    var NSGetModule = XPCOMUtils.generateNSGetModule([com.github.haqer1.app.RequestAssistant]);
+    var NSGetModule = XPCOMUtils.generateNSGetModule([com.github.haqer1.app.ra.RequestAssistant]);
