@@ -40,24 +40,31 @@ com.github.haqer1.logging.Logger = function(isim, useDump, skipTimestamp) {
 }
 
 com.github.haqer1.app.PreferenceClearer = function(prefBranchName, _prefsArray) {
-	this.prefBranch = this.prefService.getBranch(prefBranchName).QueryInterface(Components.interfaces.nsIPrefBranch);
-	this.prefsArray = _prefsArray;
+	var bu = this;
+	var _prefService = Components.classes["@mozilla.org/preferences-service;1"].getService(Components.interfaces.nsIPrefService);
+	var _prefBranch = _prefService.getBranch(prefBranchName).QueryInterface(Components.interfaces.nsIPrefBranch);
+	Object.defineProperty(bu, "prefBranch", {
+		value: _prefBranch,
+		writable: false
+	});
+	Object.defineProperty(bu, "prefsArray", {value: _prefsArray, writable: false});
 }
 
-com.github.haqer1.app.PreferenceClearer.prototype = {
-	prefService: Components.classes["@mozilla.org/preferences-service;1"].getService(Components.interfaces.nsIPrefService),
-
-	clearPreferences: function() {
-//		this.prefsArray.forEach(this.clearPreference);
-		for (var i = 0; i < this.prefsArray.length; i++)
-			this.clearPreference(this.prefsArray[i]);
-	},
-
-	clearPreference: function(pref) {
-		if (this.prefBranch.prefHasUserValue(pref))
-			this.prefBranch.clearUserPref(pref);
-	}
-}
+Object.defineProperty(com.github.haqer1.app.PreferenceClearer.prototype, "clearPreferences", {
+		value: function() {
+//			this.prefsArray.forEach(this.clearPreference);
+			for (var i = 0; i < this.prefsArray.length; i++)
+				this.clearPreference(this.prefsArray[i]);
+		},
+		writable: false
+	});
+Object.defineProperty(com.github.haqer1.app.PreferenceClearer.prototype, "clearPreference", {
+		value: function(pref) {
+			if (this.prefBranch.prefHasUserValue(pref))
+				this.prefBranch.clearUserPref(pref);
+		},
+		writable: false
+	});
 
 com.github.haqer1.app.RequestAssistantDelegate = function(logger) {
 	com.github.haqer1.app.PreferenceClearer.call(this, "browser.dom.window.dump.", ["enabled"]);
@@ -78,7 +85,8 @@ com.github.haqer1.app.RequestAssistantDelegate = function(logger) {
 
 com.github.haqer1.app.RequestAssistantDelegate.prototype = Object.create(com.github.haqer1.app.PreferenceClearer.prototype, {
 	logger: {
-		value: new com.github.haqer1.logging.Logger("RequestAssistantDelegate", true)
+		value: new com.github.haqer1.logging.Logger("RequestAssistantDelegate", true),
+		writable: false
 	},
 	clearPreferences: {
 		value: function() {
