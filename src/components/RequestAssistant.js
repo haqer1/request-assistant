@@ -40,14 +40,13 @@ com.github.haqer1.logging.Logger = function(isim, useDump, skipTimestamp) {
 }
 
 com.github.haqer1.app.PreferenceClearer = function(prefBranchName, _prefsArray) {
-	var bu = this;
 	var _prefService = Components.classes["@mozilla.org/preferences-service;1"].getService(Components.interfaces.nsIPrefService);
 	var _prefBranch = _prefService.getBranch(prefBranchName).QueryInterface(Components.interfaces.nsIPrefBranch);
-	Object.defineProperty(bu, "prefBranch", {
+	Object.defineProperty(this, "prefBranch", {
 		value: _prefBranch,
 		writable: false
 	});
-	Object.defineProperty(bu, "prefsArray", {value: _prefsArray, writable: false});
+	Object.defineProperty(this, "prefsArray", {value: _prefsArray, writable: false});
 }
 
 Object.defineProperty(com.github.haqer1.app.PreferenceClearer.prototype, "clearPreferences", {
